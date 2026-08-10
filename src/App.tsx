@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 import { ChecklistGroup } from './components/ChecklistGroup'
 import { PendingList, ProgressSummary, SuccessMessage } from './components/ProgressSummary'
@@ -8,7 +8,7 @@ import {
   createEmptyChecked,
   type CategoryId,
 } from './types/checklist'
-import { clearState, loadState, saveState } from './utils/storage'
+import { clearState, loadState, saveState, subscribeExternalChange } from './utils/storage'
 
 const TOTAL = CHECKLIST_ITEMS.length
 /** PC の進捗パネルに出す未完了項目の件数。これを超えたぶんは「他 N 件」に畳む。 */
@@ -26,9 +26,33 @@ export default function App() {
   const [resetDone, setResetDone] = useState(false)
   const [lastCheckedCategory, setLastCheckedCategory] = useState<CategoryId | null>(null)
 
+  // 読み込んだ内容と同じあいだは保存しない。
+  // 保存データが読めなかったとき loadState は初期状態を返すので、そのまま書くと
+  // 「開いただけで原本が消える」ことになる。
+  //
+  // 「初回だけ飛ばす」フラグにしないこと。StrictMode は同じ ref を保ったまま
+  // 2度マウントするため、2回目に保存が走って破れる（実際に破れているのを実測した）。
+  // 値そのものを突き合わせれば、何度マウントされても結果は変わらない。
+  const lastPersisted = useRef(JSON.stringify(state))
   useEffect(() => {
+    const next = JSON.stringify(state)
+    if (next === lastPersisted.current) return
+    lastPersisted.current = next
     saveState(state)
   }, [state])
+
+  // 他のタブでの変更を取り込む。購読が無いと、後から操作したタブが先のタブのチェックを消し、
+  // 消された側は完了表示のまま残る。
+  // 取り込んだ値を lastPersisted にも入れて、受け取った内容をそのまま書き戻さないようにする。
+  useEffect(
+    () =>
+      subscribeExternalChange(() => {
+        const fresh = loadState()
+        lastPersisted.current = JSON.stringify(fresh)
+        setState(fresh)
+      }),
+    [],
+  )
 
   // 未完了リストから飛んだ直後の目印。1.6 秒だけ光らせて離す。
   useEffect(() => {
@@ -54,10 +78,13 @@ export default function App() {
   const pending = CHECKLIST_ITEMS.filter((item) => !checked[item.id])
   const done = TOTAL - pending.length
   // 切り捨て固定。100% が出るのは done === TOTAL のときだけ、という不変条件を守る。
-  const percent = Math.floor((done / TOTAL) * 100)
-  const complete = done === TOTAL
+  // 項目が0件のときは 0/0 = NaN になり、幅に "NaN%" が入るうえ「全部終わった」と判定される。
+  const percent = TOTAL === 0 ? 0 : Math.floor((done / TOTAL) * 100)
+  const complete = TOTAL > 0 && done === TOTAL
 
   function handleToggle(id: string) {
+    // 「本当に？」を出したまま項目を押すと武装が残り、次のリセット押下が確認なしで通ってしまう。
+    if (resetArmed) setResetArmed(false)
     const wasChecked = checked[id] === true
     setState((prev) => ({
       ...prev,

@@ -65,6 +65,9 @@
   font-size: var(--fs-body-lg);
   font-family: inherit;
   letter-spacing: 0.02em;
+  /* 375px 幅では 35 文字で 4 割が枠外に出る。省略記号が無いと、
+     切れていることに気づけないまま「別の案件のチェック」を見てしまう。 */
+  text-overflow: ellipsis;
 }
 
 .header__name::placeholder {
