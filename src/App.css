@@ -1,0 +1,821 @@
+/* =========================================================
+   カテゴリ色の受け渡し
+   data-category が付いた要素の下では --cat / --cat-bg を使う
+   ========================================================= */
+[data-category='file'] {
+  --cat: var(--c-cat-file);
+  --cat-bg: var(--c-cat-file-bg);
+}
+[data-category='share'] {
+  --cat: var(--c-cat-share);
+  --cat-bg: var(--c-cat-share-bg);
+}
+[data-category='quality'] {
+  --cat: var(--c-cat-quality);
+  --cat-bg: var(--c-cat-quality-bg);
+}
+[data-category='contact'] {
+  --cat: var(--c-cat-contact);
+  --cat-bg: var(--c-cat-contact-bg);
+}
+
+/* =========================================================
+   全体レイアウト（モバイルファースト）
+   ========================================================= */
+.app {
+  /* 最終項目が下部バーに隠れないための余白 */
+  padding-bottom: calc(var(--h-dock) + 16px + env(safe-area-inset-bottom));
+}
+
+/* ---- ヘッダー（sticky） ---- */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--c-surface);
+}
+
+.header__inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 56px;
+  padding: 0 16px;
+}
+
+/* スマホでは高さの予算がないのでタイトルを出さない（title 要素とアイコンで足りる） */
+.header__title {
+  display: none;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.header__name {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: 8px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  /* 16px 未満にすると iOS Safari が自動ズームして画面が飛ぶ */
+  font-size: var(--fs-body-lg);
+  font-family: inherit;
+  letter-spacing: 0.02em;
+}
+
+.header__name::placeholder {
+  color: var(--c-text-mute);
+}
+
+.header__name:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: -1px;
+  border-color: var(--c-focus);
+}
+
+.header__count {
+  flex-shrink: 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-text-sub);
+}
+
+/* 進捗バーがヘッダーの下端線を兼ねる */
+.header__bar {
+  height: 4px;
+  background: var(--c-border);
+}
+
+.header__barfill {
+  height: 100%;
+  background: var(--c-primary);
+  transition:
+    width 220ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    background-color 240ms ease-out;
+}
+
+.header__bar--complete .header__barfill {
+  background: var(--c-success);
+}
+
+.main {
+  padding: 16px;
+}
+
+/* 進捗パネルは PC のみ。スマホはヘッダーと下部バーが担う */
+.panel {
+  display: none;
+}
+
+/* =========================================================
+   カテゴリカード
+   ========================================================= */
+.group {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.group__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.group__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+}
+
+.group__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cat);
+  flex-shrink: 0;
+}
+
+.group__count {
+  flex-shrink: 0;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-text-sub);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   チェック項目
+   ========================================================= */
+.item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-height: 56px;
+  padding: 14px 16px;
+  background: var(--c-surface);
+  cursor: pointer;
+  scroll-margin-top: 76px;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.item + .item {
+  border-top: 1px solid var(--c-border);
+}
+
+/* チェック済みの左端 4px 帯。色に加えて「形」でも状態を出す */
+.item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+  background: transparent;
+  transition: background-color 120ms ease-out;
+}
+
+/* input は隠すがフォーカスは残す（display:none にするとキーボードで到達できない） */
+.item__input {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.item__box {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+  border: 2px solid var(--c-border-strong);
+  border-radius: 6px;
+  background: var(--c-surface);
+  color: transparent;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out;
+}
+
+.item__box svg {
+  transform: scale(0.6);
+  opacity: 0;
+  transition:
+    transform 120ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    opacity 120ms ease-out;
+}
+
+.item__label {
+  font-size: var(--fs-body-lg);
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  color: var(--c-text);
+  word-break: auto-phrase;
+  transition: color 120ms ease-out;
+}
+
+/* ---- チェック済み ---- */
+.item:has(.item__input:checked)::before {
+  background: var(--cat);
+}
+
+.item:has(.item__input:checked) .item__box {
+  background: var(--cat);
+  border-color: var(--cat);
+  color: #ffffff;
+}
+
+.item:has(.item__input:checked) .item__box svg {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* opacity では薄くしない（実効コントラストが計算できなくなる） */
+.item:has(.item__input:checked) .item__label {
+  color: var(--c-text-sub);
+}
+
+/* ---- ホバー（マウス環境限定。タッチに漏らすと押した色が残り続ける） ---- */
+@media (hover: hover) and (pointer: fine) {
+  .item:hover {
+    background: var(--cat-bg);
+  }
+  .item:hover .item__box {
+    border-color: var(--cat);
+  }
+}
+
+.item:active {
+  background: #edeff3;
+}
+
+/* ---- フォーカス ---- */
+.item:has(.item__input:focus-visible) {
+  outline: 3px solid var(--c-focus);
+  outline-offset: -3px;
+  border-radius: 8px;
+}
+
+/* ---- 未完了リストから飛んできた直後 ---- */
+.item--highlighted {
+  background: var(--cat-bg);
+}
+
+/* =========================================================
+   進捗パネル（PC）
+   ========================================================= */
+.panel__sticky {
+  position: sticky;
+  top: 96px;
+}
+
+.progress {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 20px 18px;
+  margin-bottom: 16px;
+}
+
+.progress__numbers {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.progress__fraction {
+  font-size: var(--fs-num-l);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.progress__slash,
+.progress__total {
+  color: var(--c-text-sub);
+  font-size: var(--fs-num-s);
+}
+
+.progress__percent {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--c-text-sub);
+}
+
+.bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--c-border);
+  overflow: hidden;
+}
+
+.bar__fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--c-primary);
+  transition:
+    width 220ms cubic-bezier(0.2, 0.8, 0.3, 1),
+    background-color 240ms ease-out;
+}
+
+.bar--complete .bar__fill {
+  background: var(--c-success);
+}
+
+.minibars {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.minibars__track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--c-border);
+  overflow: hidden;
+}
+
+.minibars__fill {
+  height: 100%;
+  background: var(--cat);
+  transition: width 220ms cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+
+.minibars__name {
+  display: block;
+  margin-top: 6px;
+  font-size: var(--fs-caption);
+  line-height: 1.6;
+  color: var(--c-text-sub);
+}
+
+.minibars__count {
+  display: block;
+  font-size: var(--fs-caption);
+  line-height: 1.4;
+  color: var(--c-text-mute);
+}
+
+/* =========================================================
+   未完了リスト
+   ========================================================= */
+.pending {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 16px 14px;
+}
+
+.pending__title {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.pending__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color 120ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pending__row:hover {
+    background: var(--cat-bg);
+  }
+}
+
+.pending__row:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: -3px;
+}
+
+.pending__dot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--cat);
+}
+
+.pending__category {
+  flex-shrink: 0;
+  font-size: var(--fs-caption);
+  color: var(--c-text-sub);
+  white-space: nowrap;
+}
+
+.pending__label {
+  min-width: 0;
+  flex: 1;
+  font-size: var(--fs-sm);
+  color: var(--c-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pending__rest {
+  padding: 4px 6px 0;
+  font-size: var(--fs-caption);
+  color: var(--c-text-sub);
+}
+
+/* =========================================================
+   成功メッセージ
+   ========================================================= */
+.success {
+  background: var(--c-success-bg);
+  border: 1px solid #bfe3d2;
+  border-radius: 12px;
+  padding: 20px 18px;
+  animation: rise 200ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.success__icon {
+  display: block;
+  color: var(--c-success);
+  line-height: 0;
+  margin-bottom: 10px;
+  animation: pop 160ms cubic-bezier(0.2, 0.8, 0.3, 1) 200ms both;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success__title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--c-text);
+}
+
+.success__note {
+  margin-top: 4px;
+  font-size: var(--fs-body);
+  color: var(--c-text-sub);
+}
+
+/* パネル版は PC のみ、インライン版はスマホのみ */
+.success--panel {
+  display: none;
+}
+
+.success--inline {
+  margin-bottom: 16px;
+}
+
+/* =========================================================
+   リセット
+   ========================================================= */
+.reset {
+  padding: 8px 0 4px;
+  text-align: center;
+}
+
+.reset__button {
+  min-width: 160px;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid var(--c-border-strong);
+  border-radius: 24px;
+  background: var(--c-surface);
+  color: var(--c-text-sub);
+  font-size: var(--fs-body);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 120ms ease-out,
+    border-color 120ms ease-out,
+    color 120ms ease-out;
+}
+
+.reset__button:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.reset__button--armed {
+  border-color: var(--c-danger);
+  background: var(--c-danger-bg);
+  color: var(--c-danger);
+  font-weight: 700;
+}
+
+.reset__button--next {
+  border-color: var(--c-primary);
+  color: var(--c-primary);
+  font-weight: 700;
+}
+
+.reset__done {
+  margin-top: 8px;
+  font-size: var(--fs-sm);
+  color: var(--c-success);
+}
+
+/* =========================================================
+   下部バー（スマホ）
+   ========================================================= */
+.dock {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 25;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  box-shadow: 0 -2px 8px rgb(26 29 35 / 6%);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.dock__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: var(--h-dock);
+  padding: 0 20px;
+  border: 0;
+  background: none;
+  color: var(--c-text);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dock__button:disabled {
+  cursor: default;
+}
+
+.dock--complete {
+  background: var(--c-success-bg);
+  border-top-color: #bfe3d2;
+}
+
+.dock--complete .dock__button {
+  background: var(--c-success-bg);
+  color: var(--c-success);
+}
+
+.dock__caret {
+  font-size: var(--fs-caption);
+  color: var(--c-text-sub);
+  transition: transform 160ms ease-out;
+}
+
+.dock__caret--open {
+  transform: rotate(180deg);
+}
+
+/* =========================================================
+   未完了シート（スマホ）
+   ========================================================= */
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--h-dock) + env(safe-area-inset-bottom));
+  z-index: 24;
+  max-height: 60vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--c-surface);
+  border-top: 1px solid var(--c-border);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -6px 20px rgb(26 29 35 / 12%);
+  /* 背後は暗転させない（どこにいたかを失わせない） */
+  animation: rise 160ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+
+.sheet__head {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 8px 0 16px;
+  background: var(--c-surface);
+  border-bottom: 1px solid var(--c-border);
+  border-radius: 16px 16px 0 0;
+}
+
+.sheet__title {
+  font-size: var(--fs-body);
+  font-weight: 700;
+}
+
+.sheet__close {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--c-text-sub);
+  font-size: var(--fs-body);
+  cursor: pointer;
+}
+
+.sheet__close:focus-visible {
+  outline: 3px solid var(--c-focus);
+  outline-offset: -3px;
+}
+
+.sheet__body {
+  padding: 4px 10px 14px;
+}
+
+.sheet .pending__row {
+  min-height: 52px;
+  padding: 12px 10px;
+  /* 2行になったときにドットとカテゴリ名を1行目に揃える */
+  align-items: flex-start;
+}
+
+.sheet .pending__dot,
+.sheet .pending__category {
+  margin-top: 8px;
+}
+
+/* シートは「何をチェックするか」を判断する場所なので、省略せず全文を見せる */
+.sheet .pending__label {
+  font-size: var(--fs-body);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   横向きで高さが足りないときは固定を解除する
+   ========================================================= */
+@media (orientation: landscape) and (max-height: 400px) {
+  .header {
+    position: static;
+  }
+}
+
+/* =========================================================
+   タブレット（600px〜）
+   1カラムのまま中央寄せ。ここで 2 列にすると視線が Z 字に動く
+   ========================================================= */
+@media (min-width: 600px) {
+  .main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 24px 24px 0;
+  }
+
+  .header__inner {
+    max-width: 640px;
+    margin: 0 auto;
+  }
+}
+
+/* =========================================================
+   PC（900px〜）
+   ========================================================= */
+@media (min-width: 900px) {
+  .app {
+    padding-bottom: 40px;
+  }
+
+  .header__inner {
+    max-width: 1120px;
+    height: 72px;
+    padding: 0 24px;
+    gap: 24px;
+  }
+
+  .header__title {
+    display: block;
+  }
+
+  .header__name {
+    flex: 0 0 360px;
+    height: 44px;
+  }
+
+  /* 数値も細バーも右パネルにあるので、ヘッダーからは外す */
+  .header__count,
+  .header__bar {
+    display: none;
+  }
+
+  .header {
+    border-bottom: 1px solid var(--c-border);
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 24px;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .panel {
+    display: block;
+  }
+
+  .item {
+    min-height: 52px;
+    padding: 12px 16px;
+    scroll-margin-top: 96px;
+  }
+
+  .item__box {
+    width: 22px;
+    height: 22px;
+  }
+
+  .item__label {
+    font-size: var(--fs-body);
+  }
+
+  .group__title {
+    font-size: var(--fs-title);
+  }
+
+  .success--panel {
+    display: block;
+  }
+
+  .success--inline {
+    display: none;
+  }
+
+  .reset {
+    padding: 16px 0 0;
+  }
+
+  /* スマホ専用の固定要素 */
+  .dock,
+  .sheet {
+    display: none;
+  }
+}
+
+@media (min-width: 1120px) {
+  .main,
+  .header__inner {
+    max-width: 1120px;
+  }
+}

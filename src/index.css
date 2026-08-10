@@ -1,0 +1,111 @@
+:root {
+  /* 面 */
+  --c-bg: #f7f8fa;
+  --c-surface: #ffffff;
+  --c-surface-sub: #f1f3f6;
+  --c-border: #e2e5ea;
+  --c-border-strong: #c8cdd6;
+
+  /* 文字（コントラスト比は白背景での実測値） */
+  --c-text: #1a1d23; /* 16.1:1 */
+  --c-text-sub: #5b6270; /* 6.4:1 */
+  --c-text-mute: #858c99; /* 3.5:1 = 12px以上の補助ラベル専用 */
+
+  /* 機能色 */
+  --c-primary: #1f5fd6; /* 5.7:1 */
+  --c-success: #0f7a4a; /* 5.4:1 */
+  --c-danger: #c0392b; /* 5.4:1 */
+  --c-focus: #1f5fd6;
+
+  /* カテゴリ識別色。すべて白背景で 4.5:1 以上あり、文字にも使える */
+  --c-cat-file: #2563c9;
+  --c-cat-share: #b45309;
+  --c-cat-quality: #6d28d9;
+  --c-cat-contact: #0f766e;
+
+  /* カテゴリ淡色。背景専用（この上に文字を載せない） */
+  --c-cat-file-bg: #eaf1fd;
+  --c-cat-share-bg: #fdf3e3;
+  --c-cat-quality-bg: #f3edfe;
+  --c-cat-contact-bg: #e6f4f2;
+
+  --c-success-bg: #e7f5ee;
+  --c-danger-bg: #fdf0ee;
+
+  --font-base:
+    system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', YuGothic, 'Noto Sans JP',
+    'Meiryo', sans-serif;
+
+  --fs-caption: 12px;
+  --fs-sm: 13px;
+  --fs-body: 15px;
+  --fs-body-lg: 16px;
+  --fs-title: 18px;
+  --fs-num-l: 34px;
+  --fs-num-s: 22px;
+
+  /* 固定要素の高さ。本文の下余白の計算に使う */
+  --h-dock: 60px;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--font-base);
+  font-size: var(--fs-body-lg);
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+p,
+ul {
+  margin: 0;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font-family: inherit;
+  letter-spacing: inherit;
+}
+
+/* 数字が桁で揺れないようにする（9→10 で幅が変わると視線が引っ張られる） */
+.tnum,
+.header__count,
+.group__count,
+.progress__fraction,
+.progress__percent,
+.minibars__count {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}
